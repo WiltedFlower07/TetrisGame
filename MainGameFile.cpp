@@ -112,33 +112,39 @@ void removeLine(int& currentScore){
 
 int main()
 {
+    bool gamePaused = false;
     int currentScore = 0;
     int speed = 200;
     srand(time(0));
     b = rand() % 7;
     system("cls");
     initBoard();
-    while (1){
+    while (1) {
+    if (kbhit()) {
+        char c = getch();
+        if (c == ' ') gamePaused = !gamePaused;
+        if (!gamePaused) {
+            if (c == 'a' && canMove(-1, 0)) x--;
+            if (c == 'd' && canMove(1, 0)) x++;
+            if (c == 'x' && canMove(0, 1))  y++;
+            if (c == 'q') break;
+        }
+    }
+    if (!gamePaused) {
         boardDelBlock();
-        if (kbhit()){
-            char c = getch();
-            if (c=='a' && canMove(-1,0)) x--;
-            if (c=='d' && canMove(1,0) ) x++;
-            if (c=='x' && canMove(0,1))  y++;
-            if (c=='q') break;
-        }
-        if (canMove(0,1)) y++;
+        if (canMove(0, 1)) y++;
         else {
+                block2Board();
+                removeLine(currentScore);
+
+                int level = currentScore/500;
+                speed = 200-level*20;
+                if (speed<40){speed=40;};
+
+                x = 5; y = 0; b = rand() % 7;
+            }
             block2Board();
-            removeLine(currentScore);
-
-            int level = currentScore/500;
-            speed = 200-level*20;
-            if (speed<40){speed=40;};
-
-            x = 5; y = 0; b = rand() % 7;
         }
-        block2Board();
         draw();
         Sleep(speed);
     }
