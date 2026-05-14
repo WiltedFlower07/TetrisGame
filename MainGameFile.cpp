@@ -170,7 +170,7 @@ int main()
         }
         block2Board();
         draw();
-        _sleep(200);
+        Sleep(200);
     }
     return 0;
 }
