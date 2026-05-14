@@ -37,21 +37,27 @@ char blocks[][4][4] = {
 };
 
 int x=4,y=0,b=1;
+char currentBlock[4][4];
 void gotoxy(int x, int y) {
     COORD c = {x, y};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
 }
+void loadBlock() {
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            currentBlock[i][j] = blocks[b][i][j];
+}
 void boardDelBlock(){
     for (int i = 0 ; i < 4 ; i++)
         for (int j = 0 ; j < 4 ; j++)
-            if (blocks[b][i][j] != ' ' && y+j < H)
+            if (currentBlock[i][j] != ' ' && y+j < H)
                 board[y+i][x+j] = ' ';
 }
 void block2Board(){
     for (int i = 0 ; i < 4 ; i++)
         for (int j = 0 ; j < 4 ; j++)
-            if (blocks[b][i][j] != ' ' )
-                board[y+i][x+j] = blocks[b][i][j];
+            if (currentBlock[i][j] != ' ' )
+                board[y+i][x+j] = currentBlock[i][j];
 }
 void initBoard(){
     for (int i = 0 ; i < H ; i++)
@@ -65,16 +71,56 @@ void draw(){
         for (int j = 0 ; j < W ; j++)
             cout<<board[i][j];
 }
-bool canMove(int dx, int dy){
+bool canMove(int dx, int dy){  
     for (int i = 0 ; i < 4 ; i++)
         for (int j = 0 ; j < 4 ; j++)
-            if (blocks[b][i][j] != ' '){
+            if (currentBlock[i][j] != ' '){
                 int tx = x + j + dx;
                 int ty = y + i + dy;
                 if ( tx<1 || tx >= W-1 || ty >= H-1) return false;
                 if ( board[ty][tx] != ' ') return false;
             }
     return true;
+}
+
+bool canRotate() {    // check if the block can be rotated without collision or going out of bounds
+    char temp[4][4];
+
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            temp[i][j] = currentBlock[3-j][i];
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+
+            if (temp[i][j] != ' ') {
+
+                int tx = x + j;
+                int ty = y + i;
+
+                if (tx < 1 || tx >= W-1 || ty >= H-1)
+                    return false;
+
+                if (board[ty][tx] != ' ')
+                    return false;
+            }
+        }
+    }
+    return true;
+}
+
+void rotateBlock() {  //actual rotation of the block, should only be called if canRotate() returns true
+    char temp[4][4];
+
+    // rotate here
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            temp[i][j] = currentBlock[3-j][i];
+
+    // copy back here
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            currentBlock[i][j] = temp[i][j];
 }
 
 void removeLine(int& currentScore){
@@ -115,6 +161,7 @@ int main()
     int currentScore = 0;
     srand(time(0));
     b = rand() % 7;
+    loadBlock();
     system("cls");
     initBoard();
     while (1){
@@ -124,6 +171,7 @@ int main()
             if (c=='a' && canMove(-1,0)) x--;
             if (c=='d' && canMove(1,0) ) x++;
             if (c=='x' && canMove(0,1))  y++;
+            if (c=='r' && canRotate()) rotateBlock();
             if (c=='q') break;
         }
         if (canMove(0,1)) y++;
@@ -131,6 +179,7 @@ int main()
             block2Board();
             removeLine(currentScore);
             x = 5; y = 0; b = rand() % 7;
+            loadBlock();
         }
         block2Board();
         draw();
