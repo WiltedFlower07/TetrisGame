@@ -144,13 +144,13 @@ void removeLine(int& currentScore){
                 board[0][j] = ' ';
             }
 
-            i++; 
+            i++;
         }
     }
     if (linesCleared > 0) {
         int score = 100;
         for (int i = 2; i <= linesCleared; i++) {
-            score += 100 * ( 1 + 0.5*i); 
+            score += 100 * ( 1 + 0.5*i);
         }
         currentScore += score;
     }
@@ -158,6 +158,7 @@ void removeLine(int& currentScore){
 
 int main()
 {
+    bool gamePaused = false;
     int currentScore = 0;
     int speed = 200;
     srand(time(0));
@@ -176,14 +177,25 @@ int main()
             if (c=='r' && canRotate()) rotateBlock();
             if (c=='q') break;
         }
-        if (canMove(0,1)) y++;
+    }
+    if (!gamePaused) {
+        boardDelBlock();
+        if (canMove(0, 1)) y++;
         else {
+                block2Board();
+                removeLine(currentScore);
+
+                int level = currentScore/500;
+                speed = 200-level*20;
+                if (speed<40){speed=40;};
+
+                x = 5; y = 0; b = rand() % 7;
+            }
             block2Board();
             removeLine(currentScore);
             x = 5; y = 0; b = rand() % 7;
             loadBlock();
         }
-        block2Board();
         draw();
         Sleep(speed);
     }
