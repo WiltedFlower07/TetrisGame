@@ -1,6 +1,11 @@
 #include <iostream>
 #include <conio.h>
 #include <windows.h>
+#include <vector>
+#include <fstream>
+#include <iomanip>
+#include <algorithm>
+#include <ctime>
 using namespace std;
 #define H 20
 #define W 15
@@ -35,37 +40,48 @@ char blocks[][4][4] = {
          {'O','O','O',' '},
          {' ',' ',' ',' '}}
 };
+struct Player {
+    string name;
+    int score;
+};
 int highScore = 0;
 int currentScore = 0;
 int x=4,y=0,b=1;
+int nextBlock = 0;
 char currentBlock[4][4];
+
 void gotoxy(int x, int y) {
     COORD c = {x, y};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
 }
+
 void loadBlock() {
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < 4; j++)
             currentBlock[i][j] = blocks[b][i][j];
 }
+
 void boardDelBlock(){
     for (int i = 0 ; i < 4 ; i++)
         for (int j = 0 ; j < 4 ; j++)
             if (currentBlock[i][j] != ' ' && y+i < H)
                 board[y+i][x+j] = ' ';
 }
+
 void block2Board(){
     for (int i = 0 ; i < 4 ; i++)
         for (int j = 0 ; j < 4 ; j++)
             if (currentBlock[i][j] != ' ' )
                 board[y+i][x+j] = currentBlock[i][j];
 }
+
 void initBoard(){
     for (int i = 0 ; i < H ; i++)
         for (int j = 0 ; j < W ; j++)
             if ((i==H-1) || (j==0) || (j == W-1)) board[i][j] = '#';
             else board[i][j] = ' ';
 }
+
 void draw() {
     gotoxy(0,0);
 
@@ -81,9 +97,24 @@ void draw() {
         if (i == 4)
             cout << "   Highest score: " << highScore;
 
+        if (i == 7)
+            cout << "   Next Block:";
+
+        if (i >= 9 && i < 13) {
+
+            int row = i - 9;
+
+            cout << "      ";
+
+            for (int col = 0; col < 4; col++) {
+                cout << blocks[nextBlock][row][col];
+            }
+        }
+
         cout << endl;
     }
 }
+
 bool canMove(int dx, int dy){
     for (int i = 0 ; i < 4 ; i++)
         for (int j = 0 ; j < 4 ; j++)
@@ -168,6 +199,39 @@ void removeLine(int& currentScore){
         currentScore += score;
     }
 }
+bool comparePlayers(const Player& a, const Player& b) {
+    return a.score > b.score;
+}
+void showLeaderboard(int finalScore) {
+    system("cls");
+    string name;
+    cout << "GAME OVER! Diem cua ban: " << finalScore << "\n";
+
+    do {
+        cout << "Nhap ten cua ban (toi da 12 ky tu): ";
+        cin >> name;
+        if (name.length() > 12) cout << "Ten qua dai, vui long nhap lai!\n";
+    } while (name.length() > 12);
+
+    vector<Player> leaderboard;
+    ifstream inFile("leaderboard.txt");
+    if (inFile.is_open()) {
+        Player p;
+        while (inFile >> p.name >> p.score) leaderboard.push_back(p);
+        inFile.close();
+    }
+
+    leaderboard.push_back({ name, finalScore });
+    sort(leaderboard.begin(), leaderboard.end(), comparePlayers);
+
+    ofstream outFile("leaderboard.txt");
+    cout << "\n--- BANG XEP HANG ---\n";
+    for (size_t i = 0; i < leaderboard.size() && i < 10; i++) {
+        outFile << leaderboard[i].name << " " << leaderboard[i].score << "\n";
+        cout << i + 1 << ". " << left << setw(15) << leaderboard[i].name << leaderboard[i].score << "\n";
+    }
+    outFile.close();
+}
 
 int main()
 {
@@ -184,6 +248,16 @@ int main()
 
     system("cls");
     initBoard();
+
+    ifstream inFile("leaderboard.txt");
+    if (inFile.is_open()) {
+        string tempName;
+        int tempScore;
+        if (inFile >> tempName >> tempScore) {
+            highScore = tempScore; // Lấy điểm của người đứng đầu làm kỷ lục
+        }
+        inFile.close();
+    }
 
     while(1){
         boardDelBlock();
@@ -226,10 +300,19 @@ int main()
                 if(currentScore>highScore)
                     highScore=currentScore;
 
-                x=5;
-                y=0;
-                b=rand()%7;
+                x = 5;
+                y = 0;
+                b = nextBlock;
+                nextBlock = rand() % 7;
                 loadBlock();
+
+                if (!canMove(0, 0)) {
+                    block2Board();
+                    draw();
+                    Sleep(1000);
+                    showLeaderboard(currentScore);
+                    return 0;
+                }
             }
         }
 
