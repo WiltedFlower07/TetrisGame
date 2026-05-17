@@ -161,6 +161,10 @@ int main()
     bool gamePaused = false;
     int currentScore = 0;
     int speed = 200;
+    int normalspeed = 200
+    bool isDashing = false;
+    DWORD dashStart = 0;
+    int dashDuration = 500;
     srand(time(0));
     b = rand() % 7;
     loadBlock();
@@ -172,8 +176,17 @@ int main()
             char c = getch();
             if (c=='a' && canMove(-1,0)) x--;
             if (c=='d' && canMove(1,0) ) x++;
-            if (c=='x') speed = 40;
-            else speed = 200;
+            if (c=='x') {
+                isDashing = true;
+                dashStart = GetTickCount();
+            }
+            if (isDashing) {
+                speed = 40;
+                if (GetTickCount() - dashStart >= dashDuration) {
+                    isDashing = false;
+                }
+            };
+            else speed = normalspeed;
             if (c=='r' && canRotate()) rotateBlock();
             if (c=='q') break;
         }
@@ -186,8 +199,8 @@ int main()
                 removeLine(currentScore);
 
                 int level = currentScore/500;
-                speed = 200-level*20;
-                if (speed<40){speed=40;};
+                normalspeed = 200-level*20;
+                if (normalspeed<40){normalspeed=40;};
 
                 x = 5; y = 0; b = rand() % 7;
             }
