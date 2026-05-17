@@ -47,34 +47,41 @@ struct Player {
 int highScore = 0;
 int currentScore = 0;
 int x=4,y=0,b=1;
+int nextBlock = 0;
 char currentBlock[4][4];
+
 void gotoxy(int x, int y) {
     COORD c = {x, y};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
 }
+
 void loadBlock() {
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < 4; j++)
             currentBlock[i][j] = blocks[b][i][j];
 }
+
 void boardDelBlock(){
     for (int i = 0 ; i < 4 ; i++)
         for (int j = 0 ; j < 4 ; j++)
             if (currentBlock[i][j] != ' ' && y+i < H)
                 board[y+i][x+j] = ' ';
 }
+
 void block2Board(){
     for (int i = 0 ; i < 4 ; i++)
         for (int j = 0 ; j < 4 ; j++)
             if (currentBlock[i][j] != ' ' )
                 board[y+i][x+j] = currentBlock[i][j];
 }
+
 void initBoard(){
     for (int i = 0 ; i < H ; i++)
         for (int j = 0 ; j < W ; j++)
             if ((i==H-1) || (j==0) || (j == W-1)) board[i][j] = '#';
             else board[i][j] = ' ';
 }
+
 void draw() {
     gotoxy(0,0);
 
@@ -90,9 +97,24 @@ void draw() {
         if (i == 4)
             cout << "   Highest score: " << highScore;
 
+        if (i == 7)
+            cout << "   Next Block:";
+
+        if (i >= 9 && i < 13) {
+
+            int row = i - 9;
+
+            cout << "      ";
+
+            for (int col = 0; col < 4; col++) {
+                cout << blocks[nextBlock][row][col];
+            }
+        }
+
         cout << endl;
     }
 }
+
 bool canMove(int dx, int dy){
     for (int i = 0 ; i < 4 ; i++)
         for (int j = 0 ; j < 4 ; j++)
@@ -278,9 +300,10 @@ int main()
                 if(currentScore>highScore)
                     highScore=currentScore;
 
-                x=5;
-                y=0;
-                b=rand()%7;
+                x = 5;
+                y = 0;
+                b = nextBlock;
+                nextBlock = rand() % 7;
                 loadBlock();
 
                 if (!canMove(0, 0)) {
