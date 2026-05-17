@@ -1,224 +1,430 @@
 #include <iostream>
 #include <conio.h>
 #include <windows.h>
+#include <ctime>
+
 using namespace std;
+
 #define H 20
 #define W 15
-char board[H][W] = {};
-char blocks[][4][4] = {
-        {{' ','O',' ',' '},
-         {' ','O',' ',' '},
-         {' ','O',' ',' '},
-         {' ','O',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','O',' ',' '},
-         {'O','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {'O','O',' ',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {'O','O',' ',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {'O',' ',' ',' '},
-         {'O','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ',' ','O',' '},
-         {'O','O','O',' '},
-         {' ',' ',' ',' '}}
+
+
+char BLOCKS[7][4][4] = {
+    {
+        {' ','O',' ',' '},
+        {' ','O',' ',' '},
+        {' ','O',' ',' '},
+        {' ','O',' ',' '}
+    },
+    {
+        {' ',' ',' ',' '},
+        {' ','O','O',' '},
+        {' ','O','O',' '},
+        {' ',' ',' ',' '}
+    },
+    {
+        {' ',' ',' ',' '},
+        {' ','O',' ',' '},
+        {'O','O','O',' '},
+        {' ',' ',' ',' '}
+    },
+    {
+        {' ',' ',' ',' '},
+        {' ','O','O',' '},
+        {'O','O',' ',' '},
+        {' ',' ',' ',' '}
+    },
+    {
+        {' ',' ',' ',' '},
+        {'O','O',' ',' '},
+        {' ','O','O',' '},
+        {' ',' ',' ',' '}
+    },
+    {
+        {' ',' ',' ',' '},
+        {'O',' ',' ',' '},
+        {'O','O','O',' '},
+        {' ',' ',' ',' '}
+    },
+    {
+        {' ',' ',' ',' '},
+        {' ',' ','O',' '},
+        {'O','O','O',' '},
+        {' ',' ',' ',' '}
+    }
 };
 
-int x = 4, y = 0, b = 1;
-char currentBlock[4][4];
+
 void gotoxy(int x, int y) {
-    COORD c = { x, y };
+    COORD c = { (SHORT)x, (SHORT)y };
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
 }
-void loadBlock() {
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            currentBlock[i][j] = blocks[b][i][j];
-}
-void boardDelBlock() {
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            if (currentBlock[i][j] != ' ' && y + j < H)
-                board[y + i][x + j] = ' ';
-}
-void block2Board() {
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            if (currentBlock[i][j] != ' ')
-                board[y + i][x + j] = currentBlock[i][j];
-}
-void initBoard() {
-    for (int i = 0; i < H; i++)
-        for (int j = 0; j < W; j++)
-            if ((i == H - 1) || (j == 0) || (j == W - 1)) board[i][j] = '#';
-            else board[i][j] = ' ';
-}
-void draw(int currentScore, int highScore) {
-    gotoxy(0, 0);
-    for (int i = 0; i < H; i++, cout << endl) {
-        for (int j = 0; j < W; j++)
-            cout << board[i][j];
-        if (i == 2) { cout << "\ncurrent score: " << currentScore; };
-        if (i == 4) { cout << "\n highest score: " << highScore; };
+
+
+class Block {
+private:
+    int x, y;
+    int type;
+    char shape[4][4];
+
+public:
+    Block() {
+        reset();
     }
-}
-bool canMove(int dx, int dy) {
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            if (currentBlock[i][j] != ' ') {
-                int tx = x + j + dx;
-                int ty = y + i + dy;
-                if (tx < 1 || tx >= W - 1 || ty >= H - 1) return false;
-                if (board[ty][tx] != ' ') return false;
-            }
-    return true;
-}
 
-bool canRotate() {    // check if the block can be rotated without collision or going out of bounds
-    char temp[4][4];
+    void reset() {
+        x = 5;
+        y = 0;
+        type = rand() % 7;
 
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            temp[i][j] = currentBlock[3 - j][i];
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                shape[i][j] = BLOCKS[type][i][j];
+    }
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
+    void rotate() {
+        char temp[4][4];
 
-            if (temp[i][j] != ' ') {
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                temp[i][j] = shape[3 - j][i];
 
-                int tx = x + j;
-                int ty = y + i;
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                shape[i][j] = temp[i][j];
+    }
 
-                if (tx < 1 || tx >= W - 1 || ty >= H - 1)
-                    return false;
+    // Getters
+    int getX() const { return x; }
+    int getY() const { return y; }
 
-                if (board[ty][tx] != ' ')
-                    return false;
+    void setX(int value) { x = value; }
+    void setY(int value) { y = value; }
+
+    char getCell(int i, int j) const {
+        return shape[i][j];
+    }
+
+    void setShape(char temp[4][4]) {
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                shape[i][j] = temp[i][j];
+    }
+};
+
+
+class Board {
+private:
+    char grid[H][W];
+
+public:
+    Board() {
+        init();
+    }
+
+    void init() {
+        for (int i = 0; i < H; i++) {
+            for (int j = 0; j < W; j++) {
+
+                if (i == H - 1 || j == 0 || j == W - 1)
+                    grid[i][j] = '#';
+                else
+                    grid[i][j] = ' ';
             }
         }
     }
-    return true;
-}
 
-void rotateBlock() {  //actual rotation of the block, should only be called if canRotate() returns true
-    char temp[4][4];
+    void draw(const Block& block, int score, int highScore) {
+        gotoxy(0, 0);
 
-    // rotate here
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            temp[i][j] = currentBlock[3 - j][i];
+        char temp[H][W];
 
-    // copy back here
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            currentBlock[i][j] = temp[i][j];
-}
+        // Copy board
+        for (int i = 0; i < H; i++)
+            for (int j = 0; j < W; j++)
+                temp[i][j] = grid[i][j];
 
-void removeLine(int& currentScore) {
-    int linesCleared = 0;
-    for (int i = H - 2; i > 0; i--) {
-        bool full = true;
-        for (int j = 1; j < W - 1; j++) {
-            if (board[i][j] == ' ') {
-                full = false;
-                break;
-            }
-        }
-        if (full) {
-            linesCleared++;
-            for (int k = i; k > 0; k--) {
-                for (int j = 1; j < W - 1; j++) {
-                    board[k][j] = board[k - 1][j];
+        // Draw current block
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+
+                if (block.getCell(i, j) != ' ') {
+
+                    int x = block.getX() + j;
+                    int y = block.getY() + i;
+
+                    if (y >= 0 && y < H && x >= 0 && x < W)
+                        temp[y][x] = block.getCell(i, j);
                 }
             }
-            for (int j = 1; j < W - 1; j++) {
-                board[0][j] = ' ';
+        }
+
+        // Print board
+        for (int i = 0; i < H; i++) {
+
+            for (int j = 0; j < W; j++) {
+                cout << temp[i][j];
             }
 
-            i++;
-        }
-    }
-    if (linesCleared > 0) {
-        int score = 100;
-        for (int i = 2; i <= linesCleared; i++) {
-            score += 100 * (1 + 0.5 * i);
-        }
-        currentScore += score;
-    }
-}
+            if (i == 2)
+                cout << "   Score: " << score;
 
-int main()
-{
-    bool gamePaused = false;
-    int currentScore = 0;
-    int speed = 200;
-    int normalspeed = 200;
-    int highScore = 0;
-    bool isDashing = false;
-    DWORD dashStart = 0;
-    int dashDuration = 500;
-    srand(time(0));
-    b = rand() % 7;
-    loadBlock();
-    system("cls");
-    initBoard();
-    while (1) {
-        boardDelBlock();
+            if (i == 4)
+                cout << "   High Score: " << highScore;
+
+            cout << endl;
+        }
+    }
+
+    bool canMove(const Block& block, int dx, int dy) {
+
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+
+                if (block.getCell(i, j) != ' ') {
+
+                    int tx = block.getX() + j + dx;
+                    int ty = block.getY() + i + dy;
+
+                    if (tx < 1 || tx >= W - 1 || ty >= H - 1)
+                        return false;
+
+                    if (grid[ty][tx] != ' ')
+                        return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    bool canRotate(const Block& block) {
+
+        char temp[4][4];
+
+        // Rotate into temp
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                temp[i][j] = block.getCell(3 - j, i);
+
+        // Check collision
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+
+                if (temp[i][j] != ' ') {
+
+                    int tx = block.getX() + j;
+                    int ty = block.getY() + i;
+
+                    if (tx < 1 || tx >= W - 1 || ty >= H - 1)
+                        return false;
+
+                    if (grid[ty][tx] != ' ')
+                        return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    void placeBlock(const Block& block) {
+
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+
+                if (block.getCell(i, j) != ' ') {
+
+                    int x = block.getX() + j;
+                    int y = block.getY() + i;
+
+                    grid[y][x] = block.getCell(i, j);
+                }
+            }
+        }
+    }
+
+    void clearLines(int& score) {
+
+        int linesCleared = 0;
+
+        for (int i = H - 2; i > 0; i--) {
+
+            bool full = true;
+
+            for (int j = 1; j < W - 1; j++) {
+
+                if (grid[i][j] == ' ') {
+                    full = false;
+                    break;
+                }
+            }
+
+            if (full) {
+
+                linesCleared++;
+
+                for (int k = i; k > 0; k--) {
+
+                    for (int j = 1; j < W - 1; j++) {
+                        grid[k][j] = grid[k - 1][j];
+                    }
+                }
+
+                for (int j = 1; j < W - 1; j++) {
+                    grid[0][j] = ' ';
+                }
+
+                i++;
+            }
+        }
+
+        if (linesCleared > 0) {
+
+            int gained = 100;
+
+            for (int i = 2; i <= linesCleared; i++) {
+                gained += 100 * (1 + 0.5 * i);
+            }
+
+            score += gained;
+        }
+    }
+
+    bool gameOver(const Block& block) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (block.getCell(i, j) != ' ') {
+                    int x = block.getX() + j;
+                    int y = block.getY() + i;
+                    if (grid[y][x] != ' ')
+                        return true;
+                }
+            }
+        }
+        return false;
+    }
+};
+
+
+class Game {
+private:
+    Board board;
+    Block block;
+    bool running;
+    bool paused;
+    int score;
+    int highScore;
+    int speed;
+    int normalSpeed;
+    bool dashing;
+    DWORD dashStart;
+    int dashDuration;
+
+public:
+    Game() {
+        running = true;
+        paused = false;
+        score = 0;
+        highScore = 0;
+        speed = 200;
+        normalSpeed = 200;
+        dashing = false;
+        dashDuration = 500;
+    }
+
+    void input() {
         if (kbhit()) {
             char c = getch();
-			if (c == ' ') gamePaused = !gamePaused;
-            if (!gamePaused) {
-                if (c == 'a' && canMove(-1, 0)) x--;
-                if (c == 'd' && canMove(1, 0)) x++;
-                if (c == 'x') {
-                    isDashing = true;
-                    dashStart = GetTickCount();
-                }
-                if (c == 'r' && canRotate()) rotateBlock();
-                if (c == 'q') break;
+
+            if (c == ' ')
+                paused = !paused;
+
+            if (c == 'q')
+                running = false;
+
+            if (paused)
+                return;
+
+            if (c == 'a' && board.canMove(block, -1, 0))
+                block.setX(block.getX() - 1);
+
+            if (c == 'd' && board.canMove(block, 1, 0))
+                block.setX(block.getX() + 1);
+
+            if (c == 's' && board.canMove(block, 0, 1))
+                block.setY(block.getY() + 1);
+
+            if (c == 'r' && board.canRotate(block))
+                block.rotate();
+
+            if (c == 'x') {
+                dashing = true;
+                dashStart = GetTickCount();
             }
-            if (isDashing) {
-                speed = 40;
-                if (GetTickCount() - dashStart >= dashDuration) {
-                        isDashing = false;
-                }
-            }
-            else speed = normalspeed;
         }
-    if (!gamePaused) {
-        boardDelBlock();
-        if (canMove(0, 1)) y++;
+
+        if (dashing) {
+            speed = 40;
+
+            if (GetTickCount() - dashStart >= dashDuration) {
+                dashing = false;
+            }
+        }
         else {
-            block2Board();
-            removeLine(currentScore);
-
-            int level = currentScore / 500;
-            normalspeed = 200 - level * 20;
-            if (normalspeed < 40) { normalspeed = 40; };
-
-            x = 5; y = 0; b = rand() % 7;
-            loadBlock();
+            speed = normalSpeed;
         }
-        block2Board();
-        if (currentScore > highScore)
-        {
-            highScore = currentScore;
-        };
     }
-    draw(currentScore, highScore);
-    Sleep(speed);
-}
-return 0;
+
+    void update() {
+
+        if (paused)
+            return;
+
+        if (board.canMove(block, 0, 1)) {
+            block.setY(block.getY() + 1);
+        }
+        else {
+            board.placeBlock(block);
+            board.clearLines(score);
+
+            if (score > highScore)
+                highScore = score;
+
+            int level = score / 500;
+            normalSpeed = 200 - level * 20;
+
+            if (normalSpeed < 40)
+                normalSpeed = 40;
+
+            block.reset();
+
+            if (board.gameOver(block)) {
+                gotoxy(0, H + 2);
+                cout << "GAME OVER\n";
+                running = false;
+            }
+        }
+    }
+
+    void render() {
+        board.draw(block, score, highScore);
+    }
+
+    void run() {
+        system("cls");
+        while (running) {
+            input();
+            update();
+            render();
+            Sleep(speed);
+        }
+    }
+};
+
+int main() {
+    srand((unsigned)time(0));
+    Game game;
+    game.run();
+    return 0;
 }
