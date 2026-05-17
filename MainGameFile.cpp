@@ -70,6 +70,8 @@ void draw(){
     for (int i = 0 ; i < H ; i++, cout<<endl)
         for (int j = 0 ; j < W ; j++)
             cout<<board[i][j];
+        if(i==2) {cout<<"\ncurrent score: "<< currentScore;};
+        if(i==4) {cout<<"\n highest score: "<<highScore;}; 
 }
 bool canMove(int dx, int dy){  
     for (int i = 0 ; i < 4 ; i++)
@@ -161,7 +163,8 @@ int main()
     bool gamePaused = false;
     int currentScore = 0;
     int speed = 200;
-    int normalspeed = 200
+    int normalspeed = 200;
+    int highScore=0;
     bool isDashing = false;
     DWORD dashStart = 0;
     int dashDuration = 500;
@@ -206,6 +209,9 @@ int main()
             }
             block2Board();
             removeLine(currentScore);
+            if (currentScore>highScore)
+                {highScore=currentScore;
+            };
             x = 5; y = 0; b = rand() % 7;
             loadBlock();
         }
