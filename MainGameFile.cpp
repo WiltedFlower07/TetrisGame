@@ -1,6 +1,11 @@
 #include <iostream>
 #include <conio.h>
 #include <windows.h>
+#include <vector>
+#include <fstream>
+#include <iomanip>
+#include <algorithm>
+#include <ctime>
 using namespace std;
 #define H 20
 #define W 15
@@ -34,6 +39,10 @@ char blocks[][4][4] = {
          {' ',' ','O',' '},
          {'O','O','O',' '},
          {' ',' ',' ',' '}}
+};
+struct Player {
+    string name;
+    int score;
 };
 int highScore = 0;
 int currentScore = 0;
@@ -168,6 +177,39 @@ void removeLine(int& currentScore){
         currentScore += score;
     }
 }
+bool comparePlayers(const Player& a, const Player& b) {
+    return a.score > b.score;
+}
+void showLeaderboard(int finalScore) {
+    system("cls");
+    string name;
+    cout << "GAME OVER! Diem cua ban: " << finalScore << "\n";
+
+    do {
+        cout << "Nhap ten cua ban (toi da 12 ky tu): ";
+        cin >> name;
+        if (name.length() > 12) cout << "Ten qua dai, vui long nhap lai!\n";
+    } while (name.length() > 12);
+
+    vector<Player> leaderboard;
+    ifstream inFile("leaderboard.txt");
+    if (inFile.is_open()) {
+        Player p;
+        while (inFile >> p.name >> p.score) leaderboard.push_back(p);
+        inFile.close();
+    }
+
+    leaderboard.push_back({ name, finalScore });
+    sort(leaderboard.begin(), leaderboard.end(), comparePlayers);
+
+    ofstream outFile("leaderboard.txt");
+    cout << "\n--- BANG XEP HANG ---\n";
+    for (size_t i = 0; i < leaderboard.size() && i < 10; i++) {
+        outFile << leaderboard[i].name << " " << leaderboard[i].score << "\n";
+        cout << i + 1 << ". " << left << setw(15) << leaderboard[i].name << leaderboard[i].score << "\n";
+    }
+    outFile.close();
+}
 
 int main()
 {
@@ -184,6 +226,16 @@ int main()
 
     system("cls");
     initBoard();
+
+    ifstream inFile("leaderboard.txt");
+    if (inFile.is_open()) {
+        string tempName;
+        int tempScore;
+        if (inFile >> tempName >> tempScore) {
+            highScore = tempScore; // Lấy điểm của người đứng đầu làm kỷ lục
+        }
+        inFile.close();
+    }
 
     while(1){
         boardDelBlock();
@@ -230,6 +282,14 @@ int main()
                 y=0;
                 b=rand()%7;
                 loadBlock();
+
+                if (!canMove(0, 0)) {
+                    block2Board();
+                    draw();
+                    Sleep(1000);
+                    showLeaderboard(currentScore);
+                    return 0;
+                }
             }
         }
 
